@@ -35,7 +35,7 @@ python scripts/prove_point_in_time.py   # a folha sobrevive a mudança retroativ
 
 A linhagem completa, as descrições de coluna e o SQL compilado de cada modelo
 e cada teste ficam no site de documentação, reconstruído a cada push:
-**[linhagem e catálogo](https://SEU-USUARIO.github.io/commission-engine/)**.
+**[linhagem e catálogo](https://alexiasts.github.io/commission-engine/)**.
 
 ---
 
