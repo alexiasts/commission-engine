@@ -1,0 +1,7 @@
+commission_engine:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: commission_engine.duckdb
+      threads: 4

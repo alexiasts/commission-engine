@@ -1,0 +1,41 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      DBT_PROFILES_DIR: ${{ github.workspace }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install
+        run: pip install -r requirements.txt
+
+      - name: Regenerate seeds and check they are committed
+        run: |
+          python scripts/generate_seeds.py
+          git diff --exit-code seeds/
+
+      - name: Build and test
+        run: dbt build
+
+      - name: Snapshot the payroll
+        run: dbt snapshot
+
+      - name: Prove the guardrails fire
+        run: python scripts/prove_guardrails.py
+
+      - name: Prove the payroll survives a retroactive source change
+        run: python scripts/prove_point_in_time.py

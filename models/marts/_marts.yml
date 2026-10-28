@@ -1,0 +1,77 @@
+version: 2
+
+models:
+  - name: fct_seller_commission
+    description: >
+      One row per seller per period. The number a person is paid, together with
+      every input that produced it: what the arithmetic said, what was actually
+      used, why they differ, which tier that bought, and the base and rate the
+      payout came from. A row here should be reproducible by hand with a
+      calculator.
+    columns:
+      - name: seller_email
+        description: Join key everywhere. Email, never name.
+        data_tests: [unique, not_null]
+      - name: display_name
+        data_tests: [not_null]
+      - name: gross_amount
+        description: Attainment base. A cancelled sale still counts here.
+        data_tests: [not_null]
+      - name: net_amount
+        description: Payout base. A cancelled sale counts as zero here.
+        data_tests: [not_null]
+      - name: rule_code
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['STANDARD', 'RAMP_UP', 'CS']
+      - name: tier_floor
+        description: >
+          The tier the seller cleared. Null only for CS, which bypasses the
+          tier table entirely.
+      - name: commission_total
+        data_tests: [not_null]
+      - name: amount_payable
+        description: >
+          commission_total for anyone in the payment run, zero for anyone whose
+          commission is settled elsewhere. Not the same thing as having no
+          revenue.
+        data_tests: [not_null]
+
+  - name: fct_team_month
+    description: >
+      Team revenue, attributed transaction by transaction using the team that
+      owned the seller on the date of the sale. CS excluded.
+    columns:
+      - name: team
+        data_tests: [unique, not_null]
+      - name: gross_amount
+        data_tests: [not_null]
+
+  - name: fct_leader_commission
+    description: >
+      Leadership payout. TLs on their team against the team target, the
+      director on the whole operation against the company target, the CS lead
+      on a flat rate.
+    columns:
+      - name: leader_email
+        data_tests: [unique, not_null]
+      - name: role
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['TL', 'DIRECTOR', 'TL_CS']
+      - name: commission_total
+        data_tests: [not_null]
+
+  - name: rpt_cancellation_reconciliation
+    description: >
+      The churn-versus-refund gap, priced per seller. Not a defect report: both
+      readings are implemented correctly and the question of which one the rule
+      means is open with the data team.
+    columns:
+      - name: seller_email
+        data_tests: [unique, not_null]
+      - name: disputed_transactions
+        description: Sales cancelled but not refunded.
+        data_tests: [not_null]

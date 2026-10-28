@@ -1,0 +1,77 @@
+name: commission_engine
+version: "1.0.0"
+config-version: 2
+
+profile: commission_engine
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+analysis-paths: ["analyses"]
+
+target-path: "target"
+clean-targets: ["target", "dbt_packages"]
+
+vars:
+  # Accounting period under calculation.
+  period_start: "2026-09-01"
+  period_end: "2026-09-30"
+  period_label: "2026-09"
+
+  # Which cancellation definition drives the commission base.
+  # "refund"  -> money actually returned to the customer (is_refunded)
+  # "churn"   -> contract cancelled, refunded or not (is_churned)
+  # See docs/02-churn-vs-refund.md. This is an open question with the data team;
+  # making it a variable is how the two readings get compared instead of argued.
+  commission_base: "refund"
+
+  # Deliberate defect injection, used by scripts/prove_guardrails.py to show
+  # that each test actually fires. Empty in every normal run.
+  inject_defect: ""
+
+models:
+  commission_engine:
+    staging:
+      +materialized: view
+    intermediate:
+      +materialized: view
+    marts:
+      +materialized: table
+
+seeds:
+  commission_engine:
+    +quote_columns: false
+    raw_sales_transactions:
+      +column_types:
+        transaction_id: varchar
+        sale_date: date
+        gross_amount: decimal(12,2)
+        is_refunded: boolean
+        is_churned: boolean
+        team_visible: boolean
+    raw_seller_roster:
+      +column_types:
+        monthly_target: decimal(12,2)
+        fixed_pct: decimal(6,4)
+        manual_attainment_pct: decimal(8,4)
+    raw_commission_tiers:
+      +column_types:
+        min_attainment: decimal(8,4)
+        pct_full: decimal(6,4)
+        pct_recurring: decimal(6,4)
+    raw_team_periods:
+      +column_types:
+        valid_from: date
+        valid_to: date
+    raw_leadership:
+      +column_types:
+        team_target: decimal(14,2)
+    raw_leader_tiers:
+      +column_types:
+        min_attainment: decimal(8,4)
+        pct: decimal(6,4)
+
+flags:
+  send_anonymous_usage_stats: false
